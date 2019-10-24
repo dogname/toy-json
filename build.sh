@@ -25,7 +25,9 @@ gcovr -x -r test/CMakeFiles/toy_json_GTest.dir/toy-json -f ${BASE_DIR}/src > ${R
 # CPP Check report (handled by jenkins)
 # TODO OP configure where includes and source are stored from CMake
 pushd ${BASE_DIR}
-ln -s ${BUILD_DIR}/compile_commands.json ./
+if [ ! -f compile_commands.json ]; then
+    ln -s ${BUILD_DIR}/compile_commands.json ./
+fi
 cppcheck -v --enable=all --xml -Iinclude src 2> ${REPORTS_DIR}/cppcheck-report.xml || exit $?
 popd
 

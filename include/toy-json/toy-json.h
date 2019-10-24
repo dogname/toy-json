@@ -28,9 +28,10 @@ public:
     error_code parse(const char* json);
 
 private:
+    void parse_whitespace(json_context& c);
     error_code parse_literal(json_context& c, const char* expect, data_type _type);
-    error_code parse_whitespace(json_context& c);
     error_code parse_value(json_context& c);
+    error_code parse_number(json_context& c);
 };
 
 }  // namespace TOYJSON

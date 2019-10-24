@@ -1,7 +1,7 @@
 * toy-json
 为了学习 c++ 编程实现的简单 json 解析库
-* TODO toy-json [0%]
-** TODO 解析字面值 null, true, false
+* TODO toy-json [16%]
+** DONE 解析字面值 null, true, false
 ** TODO 解析数字
 ** TODO 解析字符串
 ** TODO 解析数组
