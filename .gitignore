@@ -1,0 +1,10 @@
+/*
+!doc/
+!include/
+!src/
+!test/
+!.gitignore
+!CMakeLists.txt
+!LICENSE
+!README.org
+!build.sh
