@@ -56,4 +56,25 @@ TEST(Value, PARSE_NUMBER)
     EXPECT_DOUBLE_EQ(1.234E+10, v.getNumber());
     EXPECT_EQ(PARSE_OK, v.parse("1.234E-10"));
     EXPECT_DOUBLE_EQ(1.234E-10, v.getNumber());
+    /* 特殊值 */
+    EXPECT_EQ(PARSE_OK, v.parse("1.0000000000000002"));        // 1 + 2^{-52}
+    EXPECT_DOUBLE_EQ(1.0000000000000002, v.getNumber());       // 0x 3f f0 00 00 00 00 00 01
+    EXPECT_EQ(PARSE_OK, v.parse("4.9406564584124654e-324"));   // 2^{-1022-52}
+    EXPECT_DOUBLE_EQ(4.9406564584124654e-324, v.getNumber());  // 0x 00 00 00 00 00 00 00 01
+    EXPECT_EQ(PARSE_OK, v.parse("2.2250738585072009e-308"));   // 2^{-1022}-2^{-1074}
+    EXPECT_DOUBLE_EQ(2.2250738585072009e-308, v.getNumber());  // 0x 00 0f ff ff ff ff ff ff
+    EXPECT_EQ(PARSE_OK, v.parse("1.7976931348623157e+308"));   // 2^{1024}-2^{971}
+    EXPECT_DOUBLE_EQ(1.7976931348623157e+308, v.getNumber());  // 0x 7f ef ff ff ff ff ff ff
+}
+
+TEST(Value, PARSE_INVILID)
+{
+    using namespace TOYJSON;
+    Value v;
+    EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("+5.0"));
+    EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("00123"));
+    EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("?"));
+    EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("/"));
+    EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("trues"));
+    EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("fales"));
 }

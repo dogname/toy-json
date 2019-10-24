@@ -52,7 +52,7 @@ void Value::parse_whitespace(json_context& c)
 error_code Value::parse_literal(json_context& c, const char* expect, data_type _type)
 {
     int i;
-    for (i = 0; expect[i]; ++i)
+    for (i = 0; c.json[i]; ++i)
     {
         if (c.json[i] != expect[i]) return PARSE_INVALID_VALUE;
     }
