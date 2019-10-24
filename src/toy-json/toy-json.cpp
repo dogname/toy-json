@@ -1,3 +1,5 @@
+#include <cassert>
+#include <cstdlib>
 #include <toy-json/toy-json.h>
 using namespace TOYJSON;
 Value::Value()
@@ -38,7 +40,7 @@ error_code Value::parse_value(json_context& c)
     case '\0':
         return PARSE_NEED_VALUE;
     default:
-        return PARSE_INVALID_VALUE;
+        return parse_number(c);
     }
 }
 
@@ -56,5 +58,21 @@ error_code Value::parse_literal(json_context& c, const char* expect, data_type _
     }
     c.json += i;
     type = _type;
+    return PARSE_OK;
+}
+
+double Value::getNumber() const
+{
+    assert(type == JSON_NUMBER);
+    return num;
+}
+
+error_code Value::parse_number(json_context& c)
+{
+    char* end;
+    num = std::strtod(c.json, &end);
+    if (c.json == end) return PARSE_INVALID_VALUE;
+    c.json = end;
+    type   = JSON_NUMBER;
     return PARSE_OK;
 }

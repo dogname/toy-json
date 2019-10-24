@@ -8,6 +8,7 @@ struct json_context {
 };
 class Value {
 private:
+    double num;
     data_type type;
 
 public:
@@ -19,6 +20,16 @@ public:
      *  @return return type
      */
     data_type getType() const;
+
+    /**
+     *  @brief 返回 JSON_NUMBER 的值
+     *
+     *  只有 data_type 是 JSON_NUMBER 时, 才能正常返回
+     *
+     *  @param param
+     *  @return double
+     */
+    double getNumber() const;
 
     /**
      *  @brief 解析 JSON_VALUE
