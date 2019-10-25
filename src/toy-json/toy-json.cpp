@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cstdlib>
+#include <cstring>
 #include <toy-json/toy-json.h>
 using namespace TOYJSON;
 Value::Value()
@@ -22,11 +23,11 @@ error_code Value::parse(const char* json)
     json_context c;
     error_code ret;
     c.json = json;
-    parse_whitespace(c);
-    ret = parse_value(c);
+    parseWhitespace(c);
+    ret = parseValue(c);
     if (ret == PARSE_OK)
     {
-        parse_whitespace(c);
+        parseWhitespace(c);
         if (*c.json != '\0') return PARSE_EXPECT_SIGINAL_VALUE;
     }
     return ret;
@@ -37,29 +38,31 @@ data_type Value::getType() const
     return type;
 }
 
-error_code Value::parse_value(json_context& c)
+error_code Value::parseValue(json_context& c)
 {
     switch (c.json[0])
     {
     case 't':
-        return parse_literal(c, "true", JSON_TRUE);
+        return parseLiteral(c, "true", JSON_TRUE);
     case 'f':
-        return parse_literal(c, "false", JSON_FALSE);
+        return parseLiteral(c, "false", JSON_FALSE);
     case 'n':
-        return parse_literal(c, "null", JSON_NULL);
+        return parseLiteral(c, "null", JSON_NULL);
     case '\0':
         return PARSE_NEED_VALUE;
+    case '\"':
+        return parseString(c);
     default:
-        return parse_number(c);
+        return parseNumber(c);
     }
 }
 
-void Value::parse_whitespace(json_context& c)
+void Value::parseWhitespace(json_context& c)
 {
     while (isblank(*c.json)) ++c.json;
 }
 
-error_code Value::parse_literal(json_context& c, const char* expect, data_type _type)
+error_code Value::parseLiteral(json_context& c, const char* expect, data_type _type)
 {
     int i;
     for (i = 0; expect[i]; ++i)
@@ -77,7 +80,7 @@ double Value::getNumber() const
     return num;
 }
 
-error_code Value::parse_number(json_context& c)
+error_code Value::parseNumber(json_context& c)
 {
     // TODO: naive strtod
     /* json 数字不以 + 号开头 */
@@ -110,4 +113,75 @@ error_code Value::parse_number(json_context& c)
     c.json = ptr;
     type   = JSON_NUMBER;
     return PARSE_OK;
+}
+
+char* Value::getString() const
+{
+    assert(type == JSON_STRING);
+    return str;
+}
+
+size_t Value::getStrLength() const
+{
+    assert(type == JSON_STRING);
+    return length;
+}
+
+void Value::stringFree()
+{
+    if (type == JSON_STRING)
+    {
+        delete str;
+    }
+}
+
+void Value::setNull()
+{
+    stringFree();
+    type = JSON_NULL;
+}
+
+void Value::setBoolen(bool _BOOL)
+{
+    stringFree();
+    type = _BOOL ? JSON_TRUE : JSON_FALSE;
+}
+
+void Value::setNumber(double n)
+{
+    stringFree();
+    type = JSON_NUMBER;
+    num  = n;
+}
+
+void Value::setString(const char* _str, size_t _length)
+{
+    stringFree();
+    str    = new char[length + 1];
+    length = _length;
+    memcpy(str, _str, _length);
+    str[length] = '\0';
+}
+
+error_code Value::parseString(json_context& c)
+{
+    const char* ptr = c.json;
+    const char* beg = ++ptr;
+
+    length = 0;
+    while (*ptr != '\0')
+    {
+        if (*ptr == '\"')
+        {
+            str = new char[length + 1];
+            memcpy(str, beg, length);
+            str[length] = '\0';
+            c.json      = ptr + 1;
+            type        = JSON_STRING;
+            return PARSE_OK;
+        }
+        ++ptr;
+        ++length;
+    }
+    return PARSE_STRING_MISS_QUOTATIONMARK;
 }

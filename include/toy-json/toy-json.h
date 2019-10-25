@@ -2,18 +2,35 @@
 
 namespace TOYJSON {
 enum data_type { JSON_NULL, JSON_TRUE, JSON_FALSE, JSON_NUMBER, JSON_STRING, JSON_ARRAY, JSON_OBJECT };
-enum error_code { PARSE_OK = 0, PARSE_INVALID_VALUE, PARSE_NEED_VALUE, PARSE_EXPECT_SIGINAL_VALUE };
+enum error_code {
+    PARSE_OK = 0,
+    PARSE_INVALID_VALUE,
+    PARSE_NEED_VALUE,
+    PARSE_EXPECT_SIGINAL_VALUE,
+    PARSE_STRING_MISS_QUOTATIONMARK,
+    PARSE_STRING_INVALID_CHAR,
+    PARSE_STRING_INVALID_ESCAPE
+};
 struct json_context {
     const char* json;
 };
 class Value {
 private:
-    double num;
+    union {
+        double num;
+        struct {
+            char* str;
+            size_t length;
+        };
+    };
     data_type type;
 
 public:
     Value();
-    ~Value() {}
+    ~Value()
+    {
+        if (type == JSON_STRING) delete str;
+    }
 
     /**
      *  @brief 返回JSON_VALUE 的数据类型
@@ -26,7 +43,6 @@ public:
      *
      *  只有 data_type 是 JSON_NUMBER 时, 才能正常返回
      *
-     *  @param param
      *  @return double
      */
     double getNumber() const;
@@ -38,11 +54,28 @@ public:
      */
     error_code parse(const char* json);
 
+    /**
+     *  @brief 返回 JSON_STRING 的值
+     *
+     *  只有 data_type 是 JSON_STRING 时, 才能正常返回
+     *
+     *  @return char*
+     */
+    char* getString() const;
+    size_t getStrLength() const;
+
+    void setString(const char* _str, size_t _length);
+    void setNumber(double n);
+    void setBoolen(bool _BOOL);
+    void setNull();
+
 private:
-    void parse_whitespace(json_context& c);
-    error_code parse_literal(json_context& c, const char* expect, data_type _type);
-    error_code parse_value(json_context& c);
-    error_code parse_number(json_context& c);
+    void parseWhitespace(json_context& c);
+    error_code parseLiteral(json_context& c, const char* expect, data_type _type);
+    error_code parseValue(json_context& c);
+    error_code parseNumber(json_context& c);
+    error_code parseString(json_context& c);
+    void stringFree();
 };
 
 }  // namespace TOYJSON

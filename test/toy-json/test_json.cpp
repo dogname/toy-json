@@ -72,9 +72,27 @@ TEST(Value, PARSE_INVILID)
     using namespace TOYJSON;
     Value v;
     EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("+5.0"));
+    EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("5."));
+    EXPECT_EQ(PARSE_INVALID_VALUE, v.parse(".5"));
+    EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("1.e2"));
+    EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("1.2e"));
     EXPECT_EQ(PARSE_EXPECT_SIGINAL_VALUE, v.parse("00123"));
     EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("?"));
     EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("/"));
     EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("treu"));
     EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("fales"));
+}
+
+TEST(Value, PARSE_STRING)
+{
+    using namespace TOYJSON;
+    Value v;
+    EXPECT_EQ(PARSE_OK, v.parse("\"hello, world\""));
+    EXPECT_STREQ("hello, world", v.getString());
+    EXPECT_EQ(PARSE_OK, v.parse("\"\""));
+    EXPECT_STREQ("", v.getString());
+    // EXPECT_EQ(PARSE_OK, v.parse("\"hello\\nworld \"")); // 转意字符
+    // EXPECT_STREQ("hello\nworld", v.getString());
+    // EXPECT_EQ(PARSE_OK, v.parse("\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\""));
+    // EXPECT_STREQ("\" \\ / \b \f \n \r \t", v.getString());
 }
