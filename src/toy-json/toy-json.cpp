@@ -7,6 +7,16 @@ Value::Value()
     type = JSON_NULL;
 }
 
+inline bool is1to9(char ch)
+{
+    return ch >= '1' && ch <= '9';
+}
+
+inline bool isDigit(char ch)
+{
+    return ch >= '0' && ch <= '9';
+}
+
 error_code Value::parse(const char* json)
 {
     json_context c;
@@ -52,7 +62,7 @@ void Value::parse_whitespace(json_context& c)
 error_code Value::parse_literal(json_context& c, const char* expect, data_type _type)
 {
     int i;
-    for (i = 0; c.json[i]; ++i)
+    for (i = 0; expect[i]; ++i)
     {
         if (c.json[i] != expect[i]) return PARSE_INVALID_VALUE;
     }
@@ -69,10 +79,35 @@ double Value::getNumber() const
 
 error_code Value::parse_number(json_context& c)
 {
-    char* end;
-    num = std::strtod(c.json, &end);
-    if (c.json == end) return PARSE_INVALID_VALUE;
-    c.json = end;
+    // TODO: naive strtod
+    /* json 数字不以 + 号开头 */
+    const char* ptr = c.json;
+    if (*ptr == '-') ++ptr;
+    if (*ptr == '0')
+    {
+        ++ptr;
+    }
+    else
+    {
+        if (!is1to9(*ptr)) return PARSE_INVALID_VALUE;
+        while (isDigit(*ptr)) ++ptr;
+    }
+    if (*ptr == '.')
+    {
+        ++ptr;
+        if (!isDigit(*ptr)) return PARSE_INVALID_VALUE;
+        ++ptr;
+        while (isDigit(*ptr)) ++ptr;
+    }
+    if (*ptr == 'e' || *ptr == 'E')
+    {
+        ++ptr;
+        if (*ptr == '+' || *ptr == '-') ++ptr;
+        if (!isDigit(*ptr)) return PARSE_INVALID_VALUE;
+        while (isDigit(*ptr)) ++ptr;
+    }
+    num    = strtod(c.json, nullptr);
+    c.json = ptr;
     type   = JSON_NUMBER;
     return PARSE_OK;
 }

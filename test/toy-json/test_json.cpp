@@ -72,9 +72,9 @@ TEST(Value, PARSE_INVILID)
     using namespace TOYJSON;
     Value v;
     EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("+5.0"));
-    EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("00123"));
+    EXPECT_EQ(PARSE_EXPECT_SIGINAL_VALUE, v.parse("00123"));
     EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("?"));
     EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("/"));
-    EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("trues"));
+    EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("treu"));
     EXPECT_EQ(PARSE_INVALID_VALUE, v.parse("fales"));
 }
