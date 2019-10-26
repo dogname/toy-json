@@ -91,8 +91,8 @@ TEST(Value, PARSE_STRING)
     EXPECT_STREQ("hello, world", v.getString());
     EXPECT_EQ(PARSE_OK, v.parse("\"\""));
     EXPECT_STREQ("", v.getString());
-    // EXPECT_EQ(PARSE_OK, v.parse("\"hello\\nworld \"")); // 转意字符
-    // EXPECT_STREQ("hello\nworld", v.getString());
-    // EXPECT_EQ(PARSE_OK, v.parse("\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\""));
-    // EXPECT_STREQ("\" \\ / \b \f \n \r \t", v.getString());
+    EXPECT_EQ(PARSE_OK, v.parse("\"hello\\nworld\""));  // 转意字符
+    EXPECT_STREQ("hello\nworld", v.getString());
+    EXPECT_EQ(PARSE_OK, v.parse("\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\""));
+    EXPECT_STREQ("\" \\ / \b \f \n \r \t", v.getString());
 }

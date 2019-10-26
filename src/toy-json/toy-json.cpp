@@ -2,7 +2,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <toy-json/toy-json.h>
+
 using namespace TOYJSON;
+
 Value::Value()
 {
     type = JSON_NULL;
@@ -42,18 +44,12 @@ error_code Value::parseValue(json_context& c)
 {
     switch (c.json[0])
     {
-    case 't':
-        return parseLiteral(c, "true", JSON_TRUE);
-    case 'f':
-        return parseLiteral(c, "false", JSON_FALSE);
-    case 'n':
-        return parseLiteral(c, "null", JSON_NULL);
-    case '\0':
-        return PARSE_NEED_VALUE;
-    case '\"':
-        return parseString(c);
-    default:
-        return parseNumber(c);
+    case 't': return parseLiteral(c, "true", JSON_TRUE);
+    case 'f': return parseLiteral(c, "false", JSON_FALSE);
+    case 'n': return parseLiteral(c, "null", JSON_NULL);
+    case '\0': return PARSE_NEED_VALUE;
+    case '\"': return parseString(c);
+    default: return parseNumber(c);
     }
 }
 
@@ -115,7 +111,7 @@ error_code Value::parseNumber(json_context& c)
     return PARSE_OK;
 }
 
-char* Value::getString() const
+const char* Value::getString() const
 {
     assert(type == JSON_STRING);
     return str;
@@ -165,23 +161,37 @@ void Value::setString(const char* _str, size_t _length)
 
 error_code Value::parseString(json_context& c)
 {
-    const char* ptr = c.json;
-    const char* beg = ++ptr;
-
-    length = 0;
-    while (*ptr != '\0')
+    const char* ptr = c.json + 1;
+    while (true)
     {
-        if (*ptr == '\"')
+        char ch = *(ptr++);
+        switch (ch)
         {
-            str = new char[length + 1];
-            memcpy(str, beg, length);
+        case '\"':
+            length = c.buf.length();
+            str    = new char[length + 1];
+            c.buf.copy(str, length);
             str[length] = '\0';
-            c.json      = ptr + 1;
+            c.json      = ptr;
             type        = JSON_STRING;
             return PARSE_OK;
+        case '\\':
+            switch (*(ptr++))
+            {
+            case '\"': c.buf.push_back('\"'); break;
+            case '\\': c.buf.push_back('\\'); break;
+            case '/': c.buf.push_back('/'); break;
+            case 'b': c.buf.push_back('\b'); break;
+            case 'f': c.buf.push_back('\f'); break;
+            case 'n': c.buf.push_back('\n'); break;
+            case 'r': c.buf.push_back('\r'); break;
+            case 't': c.buf.push_back('\t'); break;
+            // TODO: \uXXXX
+            default: c.json = ptr; return PARSE_STRING_INVALID_ESCAPE;
+            }
+            break;
+        case '\0': return PARSE_STRING_MISS_QUOTATIONMARK;
+        default: c.buf.push_back(ch);
         }
-        ++ptr;
-        ++length;
     }
-    return PARSE_STRING_MISS_QUOTATIONMARK;
 }

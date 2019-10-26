@@ -11,9 +11,12 @@ enum error_code {
     PARSE_STRING_INVALID_CHAR,
     PARSE_STRING_INVALID_ESCAPE
 };
+
 struct json_context {
     const char* json;
+    std::string buf;
 };
+
 class Value {
 private:
     union {
@@ -61,7 +64,7 @@ public:
      *
      *  @return char*
      */
-    char* getString() const;
+    const char* getString() const;
     size_t getStrLength() const;
 
     void setString(const char* _str, size_t _length);
