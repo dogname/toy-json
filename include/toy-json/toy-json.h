@@ -9,7 +9,9 @@ enum error_code {
     PARSE_EXPECT_SIGINAL_VALUE,
     PARSE_STRING_MISS_QUOTATIONMARK,
     PARSE_STRING_INVALID_CHAR,
-    PARSE_STRING_INVALID_ESCAPE
+    PARSE_STRING_INVALID_ESCAPE,
+    PARSE_STRING_INVALID_UNICODE_HEX,
+    PARSE_STRING_INVALID_UNICODE_SURROGATE
 };
 
 struct json_context {
@@ -78,6 +80,8 @@ private:
     error_code parseValue(json_context& c);
     error_code parseNumber(json_context& c);
     error_code parseString(json_context& c);
+    const char* parseUnicodeHex(const char* p, unsigned& u);
+    void encodeUTF8(json_context& c, unsigned u);
     void stringFree();
 };
 

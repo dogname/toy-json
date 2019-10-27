@@ -186,12 +186,67 @@ error_code Value::parseString(json_context& c)
             case 'n': c.buf.push_back('\n'); break;
             case 'r': c.buf.push_back('\r'); break;
             case 't': c.buf.push_back('\t'); break;
-            // TODO: \uXXXX
+            case 'u':
+                unsigned u, uL;
+                if ((ptr = parseUnicodeHex(ptr, u)) == nullptr) return PARSE_STRING_INVALID_UNICODE_HEX;
+                if (u >= 0xD800 && u <= 0xDB00) /* surrogate */
+                {
+                    if (*(ptr++) != '\\') return PARSE_STRING_INVALID_UNICODE_SURROGATE;
+                    if (*(ptr++) != 'u') return PARSE_STRING_INVALID_UNICODE_SURROGATE;
+                    if ((ptr = parseUnicodeHex(ptr, uL)) == nullptr) return PARSE_STRING_INVALID_UNICODE_HEX;
+                    u = 0x10000 + ((u - 0xD800) << 10 | (uL - 0xDC00));
+                }
+                encodeUTF8(c, u);
+                break;
             default: c.json = ptr; return PARSE_STRING_INVALID_ESCAPE;
             }
             break;
         case '\0': return PARSE_STRING_MISS_QUOTATIONMARK;
         default: c.buf.push_back(ch);
         }
+    }
+}
+
+const char* Value::parseUnicodeHex(const char* p, unsigned& u)
+{
+    u = 0;
+    for (int i = 0; i < 4; ++i)
+    {
+        u <<= 4;
+        char ch = *(p++);
+        if (ch >= '0' && ch <= '9')
+            u |= ch - '0';
+        else if (ch >= 'A' && ch <= 'F')
+            u |= ch - 'A' + 10;
+        else if (ch >= 'a' && ch <= 'f')
+            u |= ch - 'a' + 10;
+        else
+            return nullptr;
+    }
+    return p;
+}
+
+void Value::encodeUTF8(json_context& c, unsigned u)
+{
+    if (u <= 0x007F)
+        c.buf.push_back(u & 0xFF);
+    else if (u <= 0x07FF)
+    {
+        c.buf.push_back(0xC0 | ((u >> 6) & 0x1F));
+        c.buf.push_back(0x80 | (u & 0x3F));
+    }
+    else if (u <= 0xFFFF)
+    {
+        c.buf.push_back(0xE0 | ((u >> 12) & 0x0F));
+        c.buf.push_back(0x80 | ((u >> 6) & 0x3F));
+        c.buf.push_back(0x80 | (u & 0x3F));
+    }
+    else
+    {
+        assert(u <= 0x10FFFF);
+        c.buf.push_back(0xF0 | ((u >> 18) & 0x07));
+        c.buf.push_back(0x80 | ((u >> 12) & 0x3F));
+        c.buf.push_back(0x80 | ((u >> 6) & 0x3F));
+        c.buf.push_back(0x80 | (u & 0x3F));
     }
 }
