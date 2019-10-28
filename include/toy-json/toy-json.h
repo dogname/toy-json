@@ -99,6 +99,7 @@ private:
 struct arrList {
     Value v;
     arrList* next;
+    arrList() : next(nullptr) {}
 };
 
 }  // namespace TOYJSON

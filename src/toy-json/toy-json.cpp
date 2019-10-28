@@ -130,9 +130,9 @@ void Value::valueFree()
 {
     if (type == JSON_STRING)
     {
-        delete str;
+        delete[] str;
     }
-    if (type == JSON_ARRAY)
+    else if (type == JSON_ARRAY)
     {
         while (arr)
         {
@@ -182,7 +182,8 @@ error_code Value::parseString(json_context& c)
         {
         case '\"':
             length = c.buf.length();
-            str    = new char[length + 1];
+            delete[] str;
+            str = new char[length + 1];
             c.buf.copy(str, length);
             str[length] = '\0';
             c.json      = ptr;
