@@ -1,4 +1,5 @@
 #include <string>
+#include <vector>
 
 namespace TOYJSON {
 enum data_type { JSON_NULL, JSON_TRUE, JSON_FALSE, JSON_NUMBER, JSON_STRING, JSON_ARRAY, JSON_OBJECT };
@@ -11,7 +12,8 @@ enum error_code {
     PARSE_STRING_INVALID_CHAR,
     PARSE_STRING_INVALID_ESCAPE,
     PARSE_STRING_INVALID_UNICODE_HEX,
-    PARSE_STRING_INVALID_UNICODE_SURROGATE
+    PARSE_STRING_INVALID_UNICODE_SURROGATE,
+    PARSE_ARRAY_MISS_COMMA_OR_SQUARE_BRACKET
 };
 
 struct json_context {
@@ -19,6 +21,7 @@ struct json_context {
     std::string buf;
 };
 
+struct arrList;
 class Value {
 private:
     union {
@@ -27,6 +30,10 @@ private:
             char* str;
             size_t length;
         };
+        struct {
+            arrList* arr;
+            arrList* tail;
+        };
     };
     data_type type;
 
@@ -34,7 +41,7 @@ public:
     Value();
     ~Value()
     {
-        if (type == JSON_STRING) delete str;
+        valueFree();
     }
 
     /**
@@ -69,6 +76,9 @@ public:
     const char* getString() const;
     size_t getStrLength() const;
 
+    arrList* getArray(size_t index) const;
+    arrList* getArrEnd() const;
+
     void setString(const char* _str, size_t _length);
     void setNumber(double n);
     void setBoolen(bool _BOOL);
@@ -80,9 +90,15 @@ private:
     error_code parseValue(json_context& c);
     error_code parseNumber(json_context& c);
     error_code parseString(json_context& c);
+    error_code parseArray(json_context& c);
     const char* parseUnicodeHex(const char* p, unsigned& u);
     void encodeUTF8(json_context& c, unsigned u);
-    void stringFree();
+    void valueFree();
+};
+
+struct arrList {
+    Value v;
+    arrList* next;
 };
 
 }  // namespace TOYJSON

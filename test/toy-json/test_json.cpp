@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <toy-json/toy-json.h>
+#if 0
 TEST(Value, PARSE_LITERAL)
 {
     using namespace TOYJSON;
@@ -115,4 +116,28 @@ TEST(Value, PARSE_STRING)
     TEST_STRING("\xE2\x82\xAC", "\"\\u20AC\"");            /* Euro sign U+20AC */
     TEST_STRING("\xF0\x9D\x84\x9E", "\"\\uD834\\uDD1E\""); /* G clef sign U+1D11E */
     TEST_STRING("\xF0\x9D\x84\x9E", "\"\\ud834\\udd1e\""); /* G clef sign U+1D11E */
+}
+#endif
+
+TEST(Value, PARSE_ARRAY)
+{
+    using namespace TOYJSON;
+    Value v;
+    EXPECT_EQ(PARSE_OK, v.parse("[ ]"));
+    EXPECT_EQ(JSON_ARRAY, v.getType());
+    EXPECT_TRUE(v.getArray(0) == nullptr && v.getArrEnd() == nullptr);
+
+    EXPECT_EQ(PARSE_OK, v.parse("[ null, true , false, 123, \"abc\"]"));
+    EXPECT_EQ(JSON_ARRAY, v.getType());
+    arrList* p = v.getArray(0);
+    for (int i = 0; i < 3; ++i)
+    {
+        EXPECT_EQ(i, p->v.getType());
+        p = p->next;
+    }
+    EXPECT_EQ(JSON_NUMBER, p->v.getType());
+    EXPECT_DOUBLE_EQ(123, p->v.getNumber());
+    p = p->next;
+    EXPECT_EQ(JSON_STRING, p->v.getType());
+    EXPECT_STREQ("abc", p->v.getString());
 }

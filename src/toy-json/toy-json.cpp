@@ -7,6 +7,7 @@ using namespace TOYJSON;
 
 Value::Value()
 {
+    num  = 0;
     type = JSON_NULL;
 }
 
@@ -42,6 +43,7 @@ data_type Value::getType() const
 
 error_code Value::parseValue(json_context& c)
 {
+    parseWhitespace(c);
     switch (c.json[0])
     {
     case 't': return parseLiteral(c, "true", JSON_TRUE);
@@ -49,6 +51,7 @@ error_code Value::parseValue(json_context& c)
     case 'n': return parseLiteral(c, "null", JSON_NULL);
     case '\0': return PARSE_NEED_VALUE;
     case '\"': return parseString(c);
+    case '[': return parseArray(c);
     default: return parseNumber(c);
     }
 }
@@ -123,36 +126,46 @@ size_t Value::getStrLength() const
     return length;
 }
 
-void Value::stringFree()
+void Value::valueFree()
 {
     if (type == JSON_STRING)
     {
         delete str;
     }
+    if (type == JSON_ARRAY)
+    {
+        while (arr)
+        {
+
+            arrList* pt = arr->next;
+            delete arr;
+            arr = pt;
+        }
+    }
 }
 
 void Value::setNull()
 {
-    stringFree();
+    valueFree();
     type = JSON_NULL;
 }
 
 void Value::setBoolen(bool _BOOL)
 {
-    stringFree();
+    valueFree();
     type = _BOOL ? JSON_TRUE : JSON_FALSE;
 }
 
 void Value::setNumber(double n)
 {
-    stringFree();
+    valueFree();
     type = JSON_NUMBER;
     num  = n;
 }
 
 void Value::setString(const char* _str, size_t _length)
 {
-    stringFree();
+    valueFree();
     str    = new char[length + 1];
     length = _length;
     memcpy(str, _str, _length);
@@ -248,5 +261,60 @@ void Value::encodeUTF8(json_context& c, unsigned u)
         c.buf.push_back(0x80 | ((u >> 12) & 0x3F));
         c.buf.push_back(0x80 | ((u >> 6) & 0x3F));
         c.buf.push_back(0x80 | (u & 0x3F));
+    }
+}
+
+arrList* Value::getArray(size_t index) const
+{
+    arrList* ret = arr;
+    while (index > 0)
+    {
+        ret = ret->next;
+    }
+    return ret;
+}
+
+arrList* Value::getArrEnd() const
+{
+    return tail;
+}
+
+error_code Value::parseArray(json_context& c)
+{
+    c.json++;
+    error_code ret;
+    parseWhitespace(c);
+    if (*c.json == ']')
+    {
+        c.json++;
+        arr = tail = nullptr;
+        type       = JSON_ARRAY;
+        return PARSE_OK;
+    }
+    while (true)
+    {
+        parseWhitespace(c);
+        arrList* node = new arrList;
+        if (arr == nullptr)
+            arr = tail = node;
+        else
+        {
+            tail->next = node;
+            tail       = node;
+        }
+        if ((ret = node->v.parseValue(c)) != PARSE_OK) return ret;
+        parseWhitespace(c);
+        if (*(c.json) == ',')
+            c.json++;
+        else if (*(c.json) == ']')
+        {
+            c.json++;
+            type = JSON_ARRAY;
+            return PARSE_OK;
+        }
+        else
+        {
+            return PARSE_ARRAY_MISS_COMMA_OR_SQUARE_BRACKET;
+        }
     }
 }
