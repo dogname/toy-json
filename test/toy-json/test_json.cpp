@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <toy-json/toy-json.h>
-#if 0
+
 TEST(Value, PARSE_LITERAL)
 {
     using namespace TOYJSON;
@@ -117,7 +117,6 @@ TEST(Value, PARSE_STRING)
     TEST_STRING("\xF0\x9D\x84\x9E", "\"\\uD834\\uDD1E\""); /* G clef sign U+1D11E */
     TEST_STRING("\xF0\x9D\x84\x9E", "\"\\ud834\\udd1e\""); /* G clef sign U+1D11E */
 }
-#endif
 
 TEST(Value, PARSE_ARRAY)
 {
