@@ -118,6 +118,24 @@ TEST(Value, PARSE_STRING)
     TEST_STRING("\xF0\x9D\x84\x9E", "\"\\ud834\\udd1e\""); /* G clef sign U+1D11E */
 }
 
+TEST(Value, SET_VALUE)
+{
+    using namespace TOYJSON;
+    Value v;
+    v.setBoolen(true);
+    EXPECT_EQ(JSON_TRUE, v.getType());
+    v.setNull();
+    EXPECT_EQ(JSON_NULL, v.getType());
+    v.setBoolen(false);
+    EXPECT_EQ(JSON_FALSE, v.getType());
+    v.setString("hello, world", 12);
+    EXPECT_EQ(JSON_STRING, v.getType());
+    EXPECT_STREQ("hello, world", v.getString());
+    v.setNull();
+    v.setString("", 0);
+    EXPECT_STREQ("", v.getString());
+}
+
 TEST(Value, PARSE_ARRAY)
 {
     using namespace TOYJSON;

@@ -166,8 +166,9 @@ void Value::setNumber(double n)
 void Value::setString(const char* _str, size_t _length)
 {
     valueFree();
-    str    = new char[length + 1];
     length = _length;
+    str    = new char[length + 1];
+    type   = JSON_STRING;
     memcpy(str, _str, _length);
     str[length] = '\0';
 }
