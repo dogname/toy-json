@@ -173,7 +173,7 @@ void Value::setString(const char* _str, size_t _length)
     str[length] = '\0';
 }
 
-error_code Value::parseString(json_context& c)
+error_code Value::parseStringX(json_context& c, const char** s, size_t& l)
 {
     const char* ptr = c.json + 1;
     while (true)
@@ -182,13 +182,9 @@ error_code Value::parseString(json_context& c)
         switch (ch)
         {
         case '\"':
-            length = c.buf.length();
-            delete[] str;
-            str = new char[length + 1];
-            c.buf.copy(str, length);
-            str[length] = '\0';
-            c.json      = ptr;
-            type        = JSON_STRING;
+            l      = c.buf.length();
+            *s     = c.buf.data();
+            c.json = ptr;
             return PARSE_OK;
         case '\\':
             switch (*(ptr++))
@@ -220,6 +216,15 @@ error_code Value::parseString(json_context& c)
         default: c.buf.push_back(ch);
         }
     }
+}
+
+error_code Value::parseString(json_context& c)
+{
+    const char* s;
+    error_code ret;
+    size_t l;
+    if ((ret = parseStringX(c, &s, l)) == PARSE_OK) setString(s, l);
+    return ret;
 }
 
 const char* Value::parseUnicodeHex(const char* p, unsigned& u)

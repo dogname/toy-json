@@ -1,3 +1,4 @@
+#include <map>
 #include <string>
 #include <vector>
 
@@ -35,6 +36,7 @@ private:
             arrList* tail;
         };
     };
+    std::map<const char*, Value> object; /* 为了方便使用std::map, 不能有重复元素 */
     data_type type;
 
 public:
@@ -90,6 +92,7 @@ private:
     error_code parseValue(json_context& c);
     error_code parseNumber(json_context& c);
     error_code parseString(json_context& c);
+    error_code parseStringX(json_context& c, const char** s, size_t& l);
     error_code parseArray(json_context& c);
     const char* parseUnicodeHex(const char* p, unsigned& u);
     void encodeUTF8(json_context& c, unsigned u);
