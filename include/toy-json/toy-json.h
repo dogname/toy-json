@@ -1,3 +1,5 @@
+#include <iostream>
+#include <iterator>
 #include <map>
 #include <string>
 #include <vector>
@@ -14,7 +16,10 @@ enum error_code {
     PARSE_STRING_INVALID_ESCAPE,
     PARSE_STRING_INVALID_UNICODE_HEX,
     PARSE_STRING_INVALID_UNICODE_SURROGATE,
-    PARSE_ARRAY_MISS_COMMA_OR_SQUARE_BRACKET
+    PARSE_ARRAY_MISS_COMMA_OR_SQUARE_BRACKET,
+    PARSE_OBJECT_MISS_KEY,
+    PARSE_OBJECT_MISS_COLON,
+    PARSE_OBJECT_MISS_COMMA_OR_CURLY_BRACKET
 };
 
 struct json_context {
@@ -36,15 +41,14 @@ private:
             arrList* tail;
         };
     };
-    std::map<const char*, Value> object; /* 为了方便使用std::map, 不能有重复元素 */
+    std::map<std::string, Value> object; /* 为了方便使用std::map, 不能有重复元素 */
     data_type type;
 
 public:
     Value();
-    ~Value()
-    {
-        valueFree();
-    }
+    Value(const Value& v);
+    ~Value();
+    Value& operator=(const Value& v);
 
     /**
      *  @brief 返回JSON_VALUE 的数据类型
@@ -81,6 +85,7 @@ public:
     arrList* getArray(size_t index) const;
     arrList* getArrEnd() const;
 
+    const Value& getObject(const std::string& key);
     void setString(const char* _str, size_t _length);
     void setNumber(double n);
     void setBoolen(bool _BOOL);
@@ -94,6 +99,7 @@ private:
     error_code parseString(json_context& c);
     error_code parseStringX(json_context& c, const char** s, size_t& l);
     error_code parseArray(json_context& c);
+    error_code parseObject(json_context& c);
     const char* parseUnicodeHex(const char* p, unsigned& u);
     void encodeUTF8(json_context& c, unsigned u);
     void valueFree();

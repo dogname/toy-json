@@ -158,3 +158,23 @@ TEST(Value, PARSE_ARRAY)
     EXPECT_EQ(JSON_STRING, p->v.getType());
     EXPECT_STREQ("abc", p->v.getString());
 }
+
+TEST(Value, PARSE_OBJECT)
+{
+    using namespace TOYJSON;
+    Value v;
+    EXPECT_EQ(PARSE_OK, v.parse(" { } "));
+    EXPECT_EQ(JSON_OBJECT, v.getType());
+
+    EXPECT_EQ(PARSE_OK, v.parse("{ \"n\":null, \"t\":true, \"f\":false, \"i\": 123, \"s\":\"abc\", \"a\":[null,123,false],\"o\":{\"1\":1,\"2\":2,\"3\":3}}"));
+    EXPECT_EQ(JSON_OBJECT, v.getType());
+    EXPECT_EQ(JSON_NULL, v.getObject("n").getType());
+    EXPECT_EQ(JSON_TRUE, v.getObject("t").getType());
+    EXPECT_EQ(JSON_FALSE, v.getObject("f").getType());
+    EXPECT_EQ(JSON_NUMBER, v.getObject("i").getType());
+    EXPECT_EQ(123, v.getObject("i").getNumber());
+    EXPECT_EQ(JSON_STRING, v.getObject("s").getType());
+    EXPECT_STREQ("abc", v.getObject("s").getString());
+    EXPECT_EQ(JSON_ARRAY, v.getObject("a").getType());
+    EXPECT_EQ(JSON_OBJECT, v.getObject("o").getType());
+}

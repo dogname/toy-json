@@ -11,6 +11,99 @@ Value::Value()
     type = JSON_NULL;
 }
 
+Value::Value(const Value& v)
+{
+    type = v.type;
+    switch (type)
+    {
+    case JSON_NUMBER: num = v.num; break;
+    case JSON_STRING: {
+        length = v.length;
+        str    = new char[length + 1];
+        memcpy(str, v.str, length);
+        str[length] = '\0';
+        break;
+    }
+    case JSON_ARRAY: {
+        const arrList* pt = v.arr;
+        while (pt)
+        {
+            arrList* node = new arrList;
+            node->v       = pt->v;
+            if (!arr)
+                arr = tail = node;
+            else
+            {
+                tail->next = node;
+                tail       = node;
+            }
+            pt = pt->next;
+        }
+        break;
+    }
+    case JSON_OBJECT: object = v.object; break;
+    default: break;
+    }
+}
+
+Value& Value::operator=(const Value& v)
+{
+    if (this != &v)
+    {
+        valueFree();
+        type = v.type;
+        switch (type)
+        {
+        case JSON_NUMBER: num = v.num; break;
+        case JSON_STRING: {
+            length = v.length;
+            str    = new char[length + 1];
+            memcpy(str, v.str, length);
+            str[length] = '\0';
+            break;
+        }
+        case JSON_ARRAY: {
+            const arrList* pt = v.arr;
+            while (pt)
+            {
+                arrList* node = new arrList;
+                node->v       = pt->v;
+                if (!arr)
+                    arr = tail = node;
+                else
+                {
+                    tail->next = node;
+                    tail       = node;
+                }
+                pt = pt->next;
+            }
+            break;
+        }
+        case JSON_OBJECT: object = v.object; break;
+        default: break;
+        }
+    }
+    return *this;
+}
+
+Value::~Value()
+{
+    if (type == JSON_STRING)
+    {
+        delete[] str;
+    }
+    else if (type == JSON_ARRAY)
+    {
+        while (arr)
+        {
+
+            arrList* pt = arr->next;
+            delete arr;
+            arr = pt;
+        }
+    }
+}
+
 inline bool is1to9(char ch)
 {
     return ch >= '1' && ch <= '9';
@@ -52,6 +145,7 @@ error_code Value::parseValue(json_context& c)
     case '\0': return PARSE_NEED_VALUE;
     case '\"': return parseString(c);
     case '[': return parseArray(c);
+    case '{': return parseObject(c);
     default: return parseNumber(c);
     }
 }
@@ -142,6 +236,10 @@ void Value::valueFree()
             arr = pt;
         }
     }
+    else if (type == JSON_OBJECT)
+    {
+        object.clear();
+    }
 }
 
 void Value::setNull()
@@ -224,6 +322,7 @@ error_code Value::parseString(json_context& c)
     error_code ret;
     size_t l;
     if ((ret = parseStringX(c, &s, l)) == PARSE_OK) setString(s, l);
+    c.buf.clear();
     return ret;
 }
 
@@ -324,4 +423,57 @@ error_code Value::parseArray(json_context& c)
             return PARSE_ARRAY_MISS_COMMA_OR_SQUARE_BRACKET;
         }
     }
+}
+
+error_code Value::parseObject(json_context& c)
+{
+    error_code ret;
+    c.json++;
+    parseWhitespace(c);
+    if (*c.json == '}')
+    {
+        c.json++;
+        type = JSON_OBJECT;
+        return PARSE_OK;
+    }
+    while (true)
+    {
+        const char* str;
+        Value v;
+        size_t l;
+        if (*c.json != '\"') return PARSE_OBJECT_MISS_KEY;
+        if ((ret = parseStringX(c, &str, l)) != PARSE_OK) return ret;
+        std::string key(str, l);
+        c.buf.clear();
+        parseWhitespace(c);
+        if (*c.json != ':') return PARSE_OBJECT_MISS_COLON;
+        c.json++;
+        parseWhitespace(c);
+        if ((ret = v.parseValue(c)) != PARSE_OK) return ret;
+        parseWhitespace(c);
+        if (*c.json == ',')
+        {
+            c.json++;
+            parseWhitespace(c);
+            object[key] = v;
+            c.buf.clear();
+        }
+        else if (*c.json == '}')
+        {
+            type = JSON_OBJECT;
+            c.json++;
+            object[key] = v;
+            return PARSE_OK;
+        }
+        else
+        {
+            return PARSE_OBJECT_MISS_COMMA_OR_CURLY_BRACKET;
+        }
+    }
+}
+
+const Value& Value::getObject(const std::string& key)
+{
+    assert(object.count(key));
+    return object[key];
 }
