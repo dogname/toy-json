@@ -1,6 +1,11 @@
 #include <cassert>
+#include <cctype>
+#include <cstddef>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
+#include <string>
 #include <toy-json/toy-json.h>
 
 using namespace TOYJSON;
@@ -152,7 +157,7 @@ error_code Value::parseValue(json_context& c)
 
 void Value::parseWhitespace(json_context& c)
 {
-    while (isblank(*c.json)) ++c.json;
+    while (isspace(*c.json)) ++c.json;
 }
 
 error_code Value::parseLiteral(json_context& c, const char* expect, data_type _type)
@@ -476,4 +481,103 @@ const Value& Value::getObject(const std::string& key)
 {
     assert(object.count(key));
     return object[key];
+}
+
+void Value::stringifyValue(std::string& c) const
+{
+    switch (type)
+    {
+    case JSON_NULL: c += "null"; break;
+    case JSON_TRUE: c += "true"; break;
+    case JSON_FALSE: c += "false"; break;
+    case JSON_NUMBER: {
+        char buf[32];
+        snprintf(buf, 32, "%.17g", num);
+        c += buf;
+        break;
+    }
+    case JSON_STRING: stringifyString(c, str, length); break;
+    case JSON_ARRAY: {
+        c += "[";
+        arrList* p = arr;
+        while (p)
+        {
+            p->v.stringifyValue(c);
+            if (p != tail) c += ",";
+            p = p->next;
+        }
+        c += "]";
+        break;
+    }
+    case JSON_OBJECT: {
+        c += "{";
+        std::map<std::string, Value>::const_iterator iter;
+        for (iter = object.begin(); iter != object.end(); iter++)
+        {
+            if (iter != object.begin()) c += ",";
+            stringifyString(c, iter->first.c_str(), iter->first.length());
+            c += ":";
+            iter->second.stringifyValue(c);
+        }
+        c += "}";
+        break;
+    }
+    }
+}
+
+void Value::stringifyString(std::string& c, const char* s, size_t l) const
+{
+    static const char hex_digits[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+    c += "\"";
+    for (size_t i = 0; i < l; ++i)
+    {
+        switch (s[i])
+        {
+        case '\"': c += "\\\""; break;
+        case '\\': c += "\\\\"; break;
+        case '\b': c += "\\b"; break;
+        case '\f': c += "\\f"; break;
+        case '\n': c += "\\n"; break;
+        case '\r': c += "\\r"; break;
+        case '\t': c += "\\t"; break;
+        default:
+            if (s[i] < 0x20)
+            {
+                char buf[7];
+                snprintf(buf, 7, "\\u%04X", s[i]);
+                c += buf;
+            }
+            else
+            {
+                c += s[i];
+            }
+        }
+    }
+    c += "\"";
+}
+
+void Value::save(const char* filename) const
+{
+    std::string c;
+    stringifyValue(c);
+    std::ofstream out(filename);
+    if (!out) std::abort();
+    out << c;
+    out.close();
+}
+
+void Value::readFromFile(const char* filename)
+{
+    std::ifstream in(filename);
+    if (in)
+    {
+        char ch;
+        std::string c;
+        while (in.get(ch)) c.push_back(ch);
+        parse(c.c_str());
+    }
+    else
+    {
+        std::cout << "读取失败";
+    }
 }

@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <iostream>
 #include <iterator>
 #include <map>
@@ -90,6 +91,8 @@ public:
     void setNumber(double n);
     void setBoolen(bool _BOOL);
     void setNull();
+    void save(const char* filename) const;
+    void readFromFile(const char* filename);
 
 private:
     void parseWhitespace(json_context& c);
@@ -103,6 +106,9 @@ private:
     const char* parseUnicodeHex(const char* p, unsigned& u);
     void encodeUTF8(json_context& c, unsigned u);
     void valueFree();
+
+    void stringifyValue(std::string& c) const;
+    void stringifyString(std::string& c, const char* s, size_t l) const;
 };
 
 struct arrList {
