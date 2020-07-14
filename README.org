@@ -1,6 +1,6 @@
 * toy-json
 为了学习 c++ 编程实现的简单 json 解析库
-* TODO toy-json [83%]
+* TODO toy-json [100%]
 ** DONE 解析字面值 null, true, false
 ** DONE 解析数字
    CLOSED: [2019-10-25 五 15:39]
@@ -10,4 +10,5 @@
    CLOSED: [2019-10-28 一 18:57]
 ** DONE 解析对象
    CLOSED: [2019-11-05 二 19:01]
-** TODO 生成器
+** DONE 生成器
+   CLOSED: [2020-07-14 二 14:25]
